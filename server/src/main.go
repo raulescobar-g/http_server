@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"html"
 	"log"
@@ -14,18 +15,45 @@ const (
 	host     = "localhost"
 	port     = 5432
 	user     = "postgres"
-	password = 
+	password = "Chispis1#"
 	dbname   = "users"
 )
 
-func handlePing(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+type userResponse struct {
+	Name   string   `json:"name"`
+	Colors []string `json:"colors"`
 }
 
+func handlePing(w http.ResponseWriter, r *http.Request) {}
+
 func handleUser(w http.ResponseWriter, r *http.Request) {
+	log.Println(fmt.Sprintf("%s %q", r.Method, html.EscapeString(r.URL.Path))) //basic logging
+	conn := getConn()
+
 	switch r.Method {
 	case http.MethodGet:
-		// Serve the resource.
+		w.Header().Set("Content-Type", "application/json")
+
+		personId := r.URL.Query().Get("id")
+		rows, err := conn.Query("SELECT name,color FROM users JOIN users_colors ON users.id = users_colors.user_id AND id=$1;", personId)
+		if err != nil {
+			log.Fatalf(fmt.Sprintf("Error querying user colors with error: %s", err)) // here return error response
+		}
+
+		responseStruct := userResponse{}
+		var name, color string
+		for rows.Next() {
+			err = rows.Scan(&name, &color)
+			if err != nil {
+				log.Fatalf(fmt.Sprintf("Could not read user with error: %s", err))
+			}
+
+			responseStruct.Name = name
+			responseStruct.Colors = append(responseStruct.Colors, color)
+
+		}
+		json.NewEncoder(w).Encode(responseStruct)
+
 	case http.MethodPost:
 		// Create a new record.
 	case http.MethodPut:
@@ -35,8 +63,7 @@ func handleUser(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
-	fmt.Fprintf(w, "%s %q", r.Method, html.EscapeString(r.URL.Path))
-	fmt.Fprintf(w, "HOWDY")
+
 }
 
 func getConn() *sql.DB {
@@ -49,7 +76,7 @@ func getConn() *sql.DB {
 	if err := db.Ping(); err != nil {
 		log.Fatalf("unable to reach database: %v", err)
 	}
-	log.Println("Connected to database")
+	//log.Println("Successfully connected to database") debug statement
 
 	return db
 }
@@ -57,25 +84,10 @@ func getConn() *sql.DB {
 func main() {
 	port := ":8080"
 
-	con := getConn()
-
-	rows, err := con.Query("SELECT * FROM USERS")
-	if err != nil {
-		log.Fatalf("Could not fetch users")
-	}
-	var user_id string
-	var name string
-	for rows.Next() {
-		err = rows.Scan(&user_id, &name)
-		if err != nil {
-			log.Fatalf("Could not read user with error:", err)
-		}
-		log.Println(user_id, name)
-	}
-
 	//using default mux
 	http.HandleFunc("/", handlePing)
 	http.HandleFunc("/user", handleUser)
+
 	log.Println("Running on port", port)
 	log.Fatal(http.ListenAndServe(port, nil))
 

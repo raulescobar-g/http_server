@@ -2,10 +2,22 @@
 http://localhost:8080/
 
 ### FRANK
-http://localhost:8080/user?id=3234234
+http://localhost:8080/user?user_id=3234234
 
 ### JENN
-http://localhost:8080/user?id=1145145
+http://localhost:8080/user?user_id=1145145
 
 ### ASHLEY
-http://localhost:8080/user?id=9943588
+http://localhost:8080/user?user_id=9943588
+
+### user does not exist
+http://localhost:8080/user?user_id=0
+
+### wrong type
+http://localhost:8080/user?user_id=abc
+
+### no arguments
+http://localhost:8080/user
+
+### post request not allowed
+POST http://localhost:8080/user 

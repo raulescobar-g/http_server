@@ -1,4 +1,11 @@
+### PING
 http://localhost:8080/
 
-###
+### FRANK
 http://localhost:8080/user?id=3234234
+
+### JENN
+http://localhost:8080/user?id=1145145
+
+### ASHLEY
+http://localhost:8080/user?id=9943588
